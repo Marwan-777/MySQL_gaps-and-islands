@@ -1,0 +1,34 @@
+with create_numbers as (
+    select  date ,
+            subs_id,
+            status , 
+            numbers ,
+          row_number() over (partition by subs_id,status order by subs_id,numbers) as status_numbers ,
+          row_number() over (partition by subs_id,status order by subs_id,numbers desc) as status_numbers_2
+    from (
+        select date, 
+               subs_id ,
+               status,
+        row_number() over (partition by subs_id) as numbers
+        FROM marwan_777.gaps_and_islands
+    )as anything
+    order by subs_id,numbers
+)
+,
+create_date as (
+    select * ,
+        case 
+          when status_numbers = 1 then date 
+        end as start_date,
+        case 
+          when status_numbers_2 = 1 then date 
+          end as end_date
+    from create_numbers
+)
+select max(start_date)as start_date,
+       max (end_date) as end_date,
+       subs_id,
+       status 
+from create_date
+group by subs_id , status
+order by subs_id , status
